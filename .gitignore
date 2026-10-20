@@ -1,0 +1,18 @@
+# Khóa riêng TUYỆT ĐỐI không được commit
+keys/**/*.key
+keys/**/*private*
+*.pem
+!keys/**/*public*.pem
+
+# Sinh ra khi chạy
+data/*.db
+data/*.db-journal
+signatures/
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.DS_Store
