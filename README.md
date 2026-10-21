@@ -13,7 +13,7 @@ Giảng viên hướng dẫn: TS. Lê Quốc Tuấn
 | | Họ và tên | MSSV | Phần chịu trách nhiệm |
 | --- | --- | --- | --- |
 | 1 | Nguyễn Duy Long | 060206005525 | Lõi mật mã, xác minh, vòng đời khóa |
-| 2 | Nguyễn Quỳnh Phiêu | | Lớp miền, manifest, lưu trữ, kiểm thử âm |
+| 2 | Nguyễn Quỳnh Phiếu |051206008523 | Lớp miền, manifest, lưu trữ, kiểm thử âm |
 | 3 | Trương Hồng Uyên | | Dòng lệnh, đo lường, biểu đồ, báo cáo |
 
 ## Đề tài làm gì
