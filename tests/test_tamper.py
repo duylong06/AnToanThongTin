@@ -1,6 +1,6 @@
 """Ca kiểm thử âm — quan trọng hơn ca dương.
 
-Người phụ trách: Phiêu | Tuần: 5
+Người phụ trách: Phiếu | Tuần: 5
 
 Các ca cần viết:
 Mỗi ca một MÃ LÝ DO RIÊNG, không gộp chung thành “sai”:
