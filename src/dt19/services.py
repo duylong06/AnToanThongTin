@@ -1,20 +1,33 @@
-"""Tầng nghiệp vụ: ký, xác minh, thu hồi, đo hiệu năng.
-
-Người phụ trách: Long (ký, xác minh, thu hồi) và Uyên (benchmark) | Tuần: 3 đến 5
-
-Phải có trong tệp này:
-- TimestampService: now(), issue_token(), check_token()
-- SigningService: sign_artifact(), sign_manifest()
-- VerificationService: verify_artifact(), verify_manifest(), ghi nhật ký
-- RevocationService: revoke(), list_affected()
-- BenchmarkRunner: run(), export_csv(), summarize()
-
-THỨ TỰ KIỂM TRA trong VerificationService — quyết định mã lý do trả về:
-  1. Khóa có trong trust list tại thời điểm ký không?
-  2. Khóa đã bị thu hồi chưa?
-  3. Chữ ký có khớp không?
-  4. Dấu thời gian có đúng không?
-Làm sai thứ tự này là mã lý do trả về sai chỗ.
+"""
+Tác giả: Nguyễn Quỳnh Phiếu
+Mô tả: Tầng Dịch vụ (Services) - Quản lý Nhật ký xác minh
 """
 
-# TODO
+from datetime import datetime, timezone
+from dt19.models import ReasonCode
+from dt19.repository import Repository
+
+
+class VerificationLogService:
+    """Dịch vụ quản lý việc ghi nhật ký xác minh chữ ký (Append-only)"""
+    
+    def __init__(self, repository: Repository):
+        self.repo = repository
+
+    def log_result(self, sig_id: str, is_valid: bool, reason: ReasonCode, details: str = "") -> None:
+        """
+        Xử lý logic nghiệp vụ trước khi ghi log:
+        - Tự động lấy thời gian hiện tại chuẩn UTC.
+        - Chuyển đổi trạng thái is_valid (True/False) thành chuỗi SUCCESS/FAILED.
+        - Gọi tầng lưu trữ (Repository) để ghi xuống Database.
+        """
+        status = "SUCCESS" if is_valid else "FAILED"
+        verified_at = datetime.now(timezone.utc).isoformat()
+        
+        self.repo.log_verification(
+            sig_id=sig_id,
+            status=status,
+            reason_code=reason,
+            verified_at=verified_at,
+            details=details
+        )
