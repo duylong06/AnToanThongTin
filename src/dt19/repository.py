@@ -11,10 +11,19 @@ from dt19.models import KeyPair, ReasonCode
 class Repository:
     def __init__(self, db_path: str = "data/sigtool.db"):
         self.db_path = db_path
+        self._memory_conn = None
+        
+        # Xử lý riêng cho bản test trong bộ nhớ: giữ 1 kết nối duy nhất để không mất bảng
+        if self.db_path == ":memory:":
+            self._memory_conn = sqlite3.connect(":memory:", check_same_thread=False)
+            self._memory_conn.row_factory = sqlite3.Row
 
     def get_connection(self) -> sqlite3.Connection:
+        # Tái sử dụng kết nối nếu là in-memory, ngược lại mở kết nối mới tới file
+        if self.db_path == ":memory:":
+            return self._memory_conn
+        
         conn = sqlite3.connect(self.db_path)
-        # Sử dụng sqlite3.Row để có thể truy xuất cột bằng tên (vd: row["key_id"])
         conn.row_factory = sqlite3.Row
         return conn
 
@@ -38,20 +47,20 @@ class Repository:
 
     def get_key(self, key_id: str) -> Optional[KeyPair]:
         """Lấy thông tin cặp khóa theo ID, trả về đối tượng KeyPair"""
-        with self.get_connection() as conn:
-            cursor = conn.execute("SELECT * FROM keys WHERE key_id = ?", (key_id,))
-            row = cursor.fetchone()
-            if row:
-                return KeyPair(
-                    key_id=row["key_id"],
-                    algorithm=row["algorithm"],
-                    public_key_pem=row["public_key_pem"],
-                    owner=row["owner"],
-                    created_at=row["created_at"],
-                    status=row["status"],
-                    revoked_at=row["revoked_at"]
-                )
-            return None
+        conn = self.get_connection()
+        cursor = conn.execute("SELECT * FROM keys WHERE key_id = ?", (key_id,))
+        row = cursor.fetchone()
+        if row:
+            return KeyPair(
+                key_id=row["key_id"],
+                algorithm=row["algorithm"],
+                public_key_pem=row["public_key_pem"],
+                owner=row["owner"],
+                created_at=row["created_at"],
+                status=row["status"],
+                revoked_at=row["revoked_at"]
+            )
+        return None
 
     def log_verification(self, sig_id: str, status: str, reason_code: ReasonCode, verified_at: str, details: str = "") -> None:
         """Ghi nhật ký xác minh chỉ ghi thêm (Append-only)"""
