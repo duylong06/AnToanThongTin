@@ -1,11 +1,20 @@
--- Lược đồ cơ sở dữ liệu SQLite
--- Người viết: Phiêu | Tuần: 2
--- Chạy:  sqlite3 data/sigtool.db < data/schema.sql
---
--- Các bảng cần có: key_pair, trust_list, trust_list_entry, artifact,
--- manifest, manifest_entry, signature, verification_log, revocation,
--- benchmark_run
+-- Bảng lưu trữ thông tin các cặp khóa (KeyPair)
+CREATE TABLE IF NOT EXISTS keys (
+    key_id TEXT PRIMARY KEY,
+    algorithm TEXT NOT NULL,
+    public_key_pem TEXT NOT NULL,
+    owner TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    status TEXT DEFAULT 'ACTIVE',
+    revoked_at TEXT
+);
 
-PRAGMA foreign_keys = ON;
-
--- TODO
+-- Bảng lưu trữ Nhật ký xác minh chỉ ghi thêm (Append-only Verification Logs)
+CREATE TABLE IF NOT EXISTS verify_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sig_id TEXT NOT NULL,
+    status TEXT NOT NULL,
+    reason_code TEXT NOT NULL,
+    verified_at TEXT NOT NULL,
+    details TEXT
+);
