@@ -21,6 +21,7 @@ import csv
 import hashlib
 import hmac
 import json
+import os
 import secrets
 import statistics
 import time
@@ -426,32 +427,71 @@ class VerificationLogService:
 class BenchmarkService:
     """Dịch vụ đo lường hiệu năng các thuật toán (Trương Hồng Uyên)"""
     
-    def __init__(self, iterations: int = 100):
+    def __init__(self, iterations: int = 100, keys_dir: str = "keys"):
         self.iterations = iterations
+        self.keys_dir = keys_dir
         self.results = []
+        # Dữ liệu thô: từng lần đo một, để kiểm chứng lại con số tổng hợp.
+        self.raw = []
+
+    @staticmethod
+    def _p95(values: list[float]) -> float:
+        """Phân vị 95. Báo kèm trung vị để thấy phần đuôi của phân bố."""
+        s = sorted(values)
+        return s[min(int(len(s) * 0.95), len(s) - 1)]
 
     def run_benchmark(self, algorithm: str, data_size: int = 1024) -> dict:
-        """Mô phỏng khung đo lường tốc độ ký và xác minh (đơn vị: ms)"""
-        # (Tầng signers.py của Long sẽ truyền thời gian thật vào đây sau, 
-        # Uyên chuẩn bị sẵn khung tính toán thống kê chuẩn xác)
-        sign_times = [1.5 for _ in range(self.iterations)]  # Dummy data
-        verify_times = [0.5 for _ in range(self.iterations)]
-        
-        # Tính toán thống kê theo yêu cầu đồ án (Trung vị và Phân vị 95)
-        median_sign = statistics.median(sign_times)
-        p95_sign = statistics.quantiles(sign_times, n=100)[94] if self.iterations >= 100 else max(sign_times)
-        
-        median_verify = statistics.median(verify_times)
-        p95_verify = statistics.quantiles(verify_times, n=100)[94] if self.iterations >= 100 else max(verify_times)
-        
+        """Đo THẬT tốc độ ký và xác minh, đơn vị mili giây.
+
+        Mỗi lần lặp ký rồi xác minh ngay trên cùng khối dữ liệu, đo riêng
+        hai thao tác. Dùng ``time.perf_counter`` vì đây là đồng hồ đơn điệu,
+        không bị nhảy khi hệ điều hành chỉnh giờ.
+
+        Giữ lại TỪNG lần đo trong ``self.raw`` chứ không chỉ giữ con số tổng
+        hợp: người đọc báo cáo phải tính lại được trung vị từ dữ liệu thô
+        (chỉ số CS-3).
+        """
+        signer = SignerFactory.create(algorithm)
+        key = signer.generate_key(keys_dir=f"{self.keys_dir}/bench", owner="bench")
+        payload = os.urandom(data_size)
+        key_size = Path(key.private_key_path).stat().st_size
+
+        sign_times: list[float] = []
+        verify_times: list[float] = []
+        sig_size = 0
+
+        for i in range(1, self.iterations + 1):
+            t0 = time.perf_counter()
+            sig = signer.sign(payload, key.private_key_path)
+            t1 = time.perf_counter()
+            sign_times.append((t1 - t0) * 1000)
+            sig_size = len(sig)
+
+            t0 = time.perf_counter()
+            signer.verify(payload, sig, key.public_key_pem)
+            t1 = time.perf_counter()
+            verify_times.append((t1 - t0) * 1000)
+
+            self.raw.append({
+                "algorithm": algorithm,
+                "lan": i,
+                "data_size_bytes": data_size,
+                "sign_ms": round(sign_times[-1], 4),
+                "verify_ms": round(verify_times[-1], 4),
+                "signature_size_bytes": sig_size,
+            })
+
         record = {
             "algorithm": algorithm,
             "data_size_bytes": data_size,
             "iterations": self.iterations,
-            "median_sign_ms": median_sign,
-            "p95_sign_ms": p95_sign,
-            "median_verify_ms": median_verify,
-            "p95_verify_ms": p95_verify
+            "median_sign_ms": round(statistics.median(sign_times), 4),
+            "p95_sign_ms": round(self._p95(sign_times), 4),
+            "median_verify_ms": round(statistics.median(verify_times), 4),
+            "p95_verify_ms": round(self._p95(verify_times), 4),
+            # Hai cột dưới phục vụ chỉ số CS-2 (kích thước chữ ký và khóa).
+            "signature_size_bytes": sig_size,
+            "key_file_size_bytes": key_size,
         }
         self.results.append(record)
         return record
@@ -468,3 +508,12 @@ class BenchmarkService:
             writer = csv.DictWriter(f, fieldnames=keys)
             writer.writeheader()
             writer.writerows(self.results)
+
+        # Kèm luôn dữ liệu thô bên cạnh tệp tổng hợp. Không có nó thì con số
+        # trung vị trong báo cáo không ai kiểm chứng lại được.
+        if self.raw:
+            raw_path = Path(file_path).with_name(Path(file_path).stem + "_raw.csv")
+            with open(raw_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=self.raw[0].keys())
+                writer.writeheader()
+                writer.writerows(self.raw)
