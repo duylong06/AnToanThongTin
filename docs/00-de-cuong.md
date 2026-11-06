@@ -12,8 +12,8 @@
 | | Họ và tên | MSSV | Vai trò | Phần chịu trách nhiệm |
 | --- | --- | --- | --- | --- |
 | 1 | **Nguyễn Duy Long** | 060206005525 | Nhóm trưởng, phụ trách kỹ thuật | Lõi mật mã, logic xác minh, vòng đời khóa |
-| 2 | Nguyễn Quỳnh Phiêu | *(điền)* | Thành viên | Lớp miền, manifest, lưu trữ, kiểm thử âm |
-| 3 | Trương Hồng Uyên | *(điền)* | Thành viên | Dòng lệnh, đo lường, biểu đồ, hồ sơ báo cáo |
+| 2 | Nguyễn Quỳnh Phiếu | 051206008523 | Thành viên | Lớp miền, manifest, lưu trữ, kiểm thử âm |
+| 3 | Trương Hồng Uyên | 051306002000 | Thành viên | Dòng lệnh, đo lường, biểu đồ, hồ sơ báo cáo |
 
 Cả ba cùng tham gia thiết kế, thực nghiệm, phân tích và bảo vệ. Nhóm chia việc
 theo lát dọc: mỗi người sở hữu một nhóm chức năng từ mã nguồn, qua kiểm thử,
