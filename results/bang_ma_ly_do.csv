@@ -1,0 +1,7 @@
+kich_ban,ma_mong_doi,ma_thuc_te,ket_luan
+1. Nguyên vẹn,SUCCESS,SUCCESS,ĐẠT
+2. Sửa một bit trong app.bin,FILE_MODIFIED,FILE_MODIFIED,ĐẠT
+3. Đổi tên tệp,METADATA_MODIFIED,METADATA_MODIFIED,ĐẠT
+4. Xóa hẳn tệp,FILE_MISSING,FILE_MISSING,ĐẠT
+5. Sửa nội dung manifest,INVALID_SIGNATURE,INVALID_SIGNATURE,ĐẠT
+6. Khóa đã bị thu hồi,KEY_REVOKED,KEY_REVOKED,ĐẠT

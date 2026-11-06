@@ -1,0 +1,4 @@
+algorithm,data_size_bytes,iterations,median_sign_ms,p95_sign_ms,median_verify_ms,p95_verify_ms,signature_size_bytes,key_file_size_bytes
+ed25519,1048576,100,3.6214,6.3138,1.8683,3.2868,64,119
+ecdsa,1048576,100,2.926,4.3228,2.8176,4.4188,71,241
+rsa-pss,1048576,100,45.0714,66.7979,2.832,4.1724,256,1704

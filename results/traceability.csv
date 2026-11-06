@@ -1,0 +1,37 @@
+ma_yeu_cau,noi_dung,ca_kiem_thu,tep_kiem_thu,minh_chung_khac,nguoi_phu_trach,trang_thai
+FR-01,Sinh cap khoa cho ba thuat toan,TC-01 TC-34,tests/test_positive.py tests/test_cli.py,keys/*/,Long,Dat
+FR-02,Dinh danh khoa sinh tu SHA-256 cua khoa cong khai,TC-34,tests/test_cli.py,src/dt19/signers.py,Long,Dat
+FR-03,Khoa rieng ghi quyen 600 khong luu noi dung vao CSDL,TC-34,tests/test_cli.py,data/schema.sql,Long,Dat
+FR-04,Liet ke khoa kem trang thai,TC-34,tests/test_cli.py,lenh keys,Uyen,Dat
+FR-05,Lap manifest co phien ban va ma bam tung tep,TC-03 TC-37,tests/test_positive.py tests/test_cli.py,artifacts/manifest.json,Phieu,Dat
+FR-06,Ky artifact don le,TC-01 TC-35,tests/test_positive.py tests/test_cli.py,signatures/,Long,Dat
+FR-07,Ky manifest bang chuoi byte chuan hoa on dinh,TC-02 TC-04,tests/test_positive.py,src/dt19/models.py canonical_bytes,Phieu,Dat
+FR-08,Gan dau thoi gian vao chu ky,TC-15,tests/test_tamper.py,src/dt19/services.py TimestampService,Long,Dat
+FR-09,Chu ky tach roi khong sua artifact goc,TC-01,tests/test_positive.py,signatures/*.sig,Long,Dat
+FR-10,Xac minh artifact va manifest,TC-01 TC-02,tests/test_positive.py,results/verify_log.jsonl,Long,Dat
+FR-11,Tra ma ly do rieng cho tung loai sai lech,TC-08 den TC-15,tests/test_tamper.py,results/bang_ma_ly_do.csv,Long,Dat
+FR-12,Phat hien sua noi dung doi ten them bot tep,TC-08 TC-10 TC-11 TC-12,tests/test_tamper.py,results/bang_ma_ly_do.csv,Phieu,Dat
+FR-13,Nhat ky xac minh chi ghi them,TC-06,tests/test_positive.py,results/verify_log.jsonl,Phieu,Dat
+FR-14,Ma thoat phan biet loi tham so voi xac minh truot,TC-35 TC-36 TC-41,tests/test_cli.py,src/dt19/cli.py,Uyen,Dat
+FR-15,Trust list co phien ban xet theo thoi diem ky,TC-16 TC-17,tests/test_rotation.py,keys/trust_list_v*.json,Long,Dat
+FR-16,Luan chuyen khoa co giai doan chong lan,TC-16 TC-17,tests/test_rotation.py,keys/trust_list_v2.json,Long,Dat
+FR-17,Thu hoi khoa cat hieu luc tai moc nghi ngo bi lo,TC-13 TC-18 TC-40,tests/test_tamper.py tests/test_rotation.py tests/test_cli.py,bang revocations,Long,Dat
+FR-18,Liet ke va dem artifact bi anh huong,TC-19 TC-39,tests/test_rotation.py tests/test_cli.py,lenh affected,Long,Dat
+FR-19,Ky lai artifact bi anh huong bang khoa moi,chua co ca tu dong,-,lenh resign da chay tay,Long,Mot phan
+FR-20,Do thoi gian ky va xac minh toi thieu 100 lan,TC-24 TC-25,tests/test_benchmark.py,results/bench.csv,Uyen,Dat
+FR-21,Xuat du lieu tho tung lan do ra CSV,TC-29,tests/test_benchmark.py,results/bench_raw.csv,Uyen,Dat
+NFR-01,Xac minh tep 1 MB duoi 50 ms,-,-,results/bench.csv CS-1 1.87 ms,Uyen,Dat
+NFR-02,Phep do tai lap duoc,-,-,scripts/sinh_minh_chung.py seed 19,Uyen,Dat
+NFR-03,Khong tu cai dat lai thuat toan mat ma,-,-,moi phep toan qua thu vien cryptography,Long,Dat
+NFR-04,Khoa rieng khong vao CSDL hay nhat ky,-,-,data/schema.sql chi co private_key_path,Phieu,Dat
+NFR-05,Nhat ky xac minh chi ghi them,TC-06,tests/test_positive.py,results/verify_log.jsonl,Phieu,Dat
+NFR-06,Khoa rieng khong lot vao kho ma,-,-,.gitignore va buoc kiem tra trong CI,Uyen,Dat
+NFR-07,Do phu kiem thu tu 70 phan tram,-,-,pytest --cov dat 86 phan tram,Uyen,Dat
+NFR-08,Moi ca kiem thu phai goi vao src/dt19,TC-25,tests/test_benchmark.py,docs/04 muc 1,Ca nhom,Dat
+NFR-09,Chay duoc tren Python 3.11 tro len,-,-,.github/workflows/ci.yml,Uyen,Dat
+NFR-10,Thong diep loi bang tieng Viet,-,-,bang MESSAGES_VI trong models.py,Phieu,Dat
+NFR-11,Kho ma sach sau khi chay kiem thu,-,-,CSDL :memory: va tmp_path,Phieu,Dat
+NFR-12,Moi tai lieu neu ro gioi han,-,-,docs/05 muc 4 va docs/07 muc 6,Long,Dat
+CH1,So sanh ba thuat toan ve kich thuoc va toc do,TC-26 TC-27,tests/test_benchmark.py,docs/07 muc 2 va 3,Uyen,Dat
+CH2,Moi thay doi deu bi phat hien va phan biet duoc nguyen nhan,TC-08 den TC-15,tests/test_tamper.py,results/bang_ma_ly_do.csv 6/6,Phieu,Dat
+CH3,Xu ly khi khoa ky bi lo va do bang chi so nao,TC-18 TC-19 TC-21,tests/test_rotation.py,docs/06 va 4 chi so,Long,Dat
