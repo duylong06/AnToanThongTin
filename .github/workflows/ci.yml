@@ -72,6 +72,11 @@ jobs:
         PYTHONPATH: src
       run: |
         set -e
+        # Kho mã có sẵn keys/trust_list_*.json làm minh chứng cho báo cáo. Nếu
+        # để nguyên, keygen thấy trust list đã tồn tại nên không công bố lại, và
+        # khóa CI vừa sinh không nằm trong đó -> verify trả KEY_NOT_TRUSTED.
+        # Xóa đi để bước này mô phỏng đúng một máy cài mới hoàn toàn.
+        rm -f keys/trust_list_*.json
         python -m dt19 init
         python -m dt19 keygen --alg ed25519 --owner "CI"
         KEY=$(python -c "import sqlite3;print(sqlite3.connect('data/sigtool.db').execute('select key_id from keys limit 1').fetchone()[0])")
