@@ -7,24 +7,85 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test:
+  # Chạy trước và nhanh: nếu có khóa riêng lọt vào kho mã thì dừng ngay,
+  # không cần chờ bộ kiểm thử. Đây là bước NFR-06 mà README cam kết.
+  bao-mat:
+    name: Kiểm tra khóa riêng
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/checkout@v4
+
+    - name: Không có tệp khóa riêng nào được theo dõi
+      run: |
+        LOT=$(git ls-files | grep -E '\.(key|p12|pfx)$' || true)
+        if [ -n "$LOT" ]; then
+          echo "::error::Phát hiện tệp khóa riêng trong kho mã:"
+          echo "$LOT"
+          exit 1
+        fi
+        echo "Không có tệp khóa riêng."
+
+    - name: Không có tệp PEM nào chứa khóa riêng
+      run: |
+        LOT=$(git grep -l -E 'BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY' -- '*.pem' '*.txt' '*.json' || true)
+        if [ -n "$LOT" ]; then
+          echo "::error::Phát hiện nội dung khóa riêng trong:"
+          echo "$LOT"
+          exit 1
+        fi
+        echo "Không có nội dung khóa riêng."
+
+  test:
+    name: Kiểm thử trên Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    needs: bao-mat
+    strategy:
+      fail-fast: false
+      matrix:
+        # NFR-09 cam kết chạy được từ Python 3.11 trở lên, nên phải kiểm
+        # trên nhiều phiên bản chứ không chỉ một.
+        python-version: ["3.11", "3.12", "3.13"]
+
+    steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: ${{ matrix.python-version }}
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest pytest-cov cryptography
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
 
     - name: Run tests with pytest
       env:
         PYTHONPATH: src
       run: |
         pytest --cov=src --cov-fail-under=70 tests/
+
+    - name: Dòng lệnh chạy được từ đầu đến cuối
+      env:
+        PYTHONPATH: src
+      run: |
+        set -e
+        python -m dt19 init
+        python -m dt19 keygen --alg ed25519 --owner "CI"
+        KEY=$(python -c "import sqlite3;print(sqlite3.connect('data/sigtool.db').execute('select key_id from keys limit 1').fetchone()[0])")
+        python -m dt19 manifest --dir artifacts --out artifacts/manifest.json
+        python -m dt19 sign artifacts/manifest.json --key $KEY --manifest
+        SIG=$(python -c "import sqlite3;print(sqlite3.connect('data/sigtool.db').execute('select signature_id from signatures limit 1').fetchone()[0])")
+
+        # Nguyên vẹn thì phải thoát 0
+        python -m dt19 verify artifacts/manifest.json --sig $SIG --root artifacts
+
+        # Sửa một bit thì phải thoát 1
+        python -c "p='artifacts/app.bin';d=bytearray(open(p,'rb').read());d[0]^=1;open(p,'wb').write(d)"
+        if python -m dt19 verify artifacts/manifest.json --sig $SIG --root artifacts; then
+          echo "::error::Tệp đã bị sửa mà xác minh vẫn đạt"
+          exit 1
+        fi
+        echo "Dòng lệnh hoạt động đúng ở cả hai chiều."
