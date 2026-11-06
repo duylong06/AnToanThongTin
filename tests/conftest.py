@@ -88,6 +88,31 @@ def trust_list():
 
 
 @pytest.fixture
+def manifest(workdir):
+    """Manifest thật, băm hai artifact mẫu trong workdir/artifacts."""
+    from dt19.models import Manifest
+
+    m = Manifest(files={}, manifest_id="manifest")
+    for p in sorted((workdir / "artifacts").iterdir()):
+        m.add_path(p)
+    return m
+
+
+@pytest.fixture
+def cli_workdir(workdir):
+    """Thư mục làm việc cho ca kiểm thử dòng lệnh.
+
+    Dòng lệnh dùng đường dẫn tương đối (data/sigtool.db, data/schema.sql),
+    nên phải chép lược đồ thật vào thư mục tạm rồi chạy `init`.
+    """
+    import shutil
+
+    (workdir / "data").mkdir(exist_ok=True)
+    shutil.copy(ROOT / "data" / "schema.sql", workdir / "data" / "schema.sql")
+    return workdir
+
+
+@pytest.fixture
 def rotation(workdir):
     """Dịch vụ luân chuyển khóa, giai đoạn chồng lấn mặc định 14 ngày."""
     return KeyRotationService(keys_dir=workdir / "keys", overlap_days=14)

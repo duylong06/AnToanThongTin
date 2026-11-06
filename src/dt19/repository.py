@@ -9,6 +9,7 @@ vào là các cột và phương thức mà việc ký, thu hồi khóa bắt bu
 """
 
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from typing import List, Optional
 
@@ -34,16 +35,34 @@ class Repository:
         conn.row_factory = sqlite3.Row
         return conn
 
+    @contextmanager
+    def _session(self, commit: bool = False):
+        """Mở kết nối, tự đóng khi xong.
+
+        Long bổ sung: bản đầu mở kết nối mới cho mỗi lần gọi mà không đóng,
+        nên chạy dòng lệnh lâu sẽ rò rỉ handle tệp và pytest báo
+        ResourceWarning. Kết nối trong bộ nhớ thì KHÔNG đóng, vì đóng là
+        mất sạch bảng.
+        """
+        conn = self.get_connection()
+        try:
+            yield conn
+            if commit:
+                conn.commit()
+        finally:
+            if self.db_path != ":memory:":
+                conn.close()
+
     def init_db(self, schema_path: str = "data/schema.sql") -> None:
         """Khởi tạo cơ sở dữ liệu từ file schema.sql"""
         with open(schema_path, "r", encoding="utf-8") as f:
             schema = f.read()
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.executescript(schema)
 
     def save_key(self, key: KeyPair) -> None:
         """Lưu hoặc cập nhật thông tin cặp khóa vào database"""
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO keys
@@ -61,9 +80,10 @@ class Repository:
 
     def get_key(self, key_id: str) -> Optional[KeyPair]:
         """Lấy thông tin cặp khóa theo ID, trả về đối tượng KeyPair"""
-        conn = self.get_connection()
-        cursor = conn.execute("SELECT * FROM keys WHERE key_id = ?", (key_id,))
-        row = cursor.fetchone()
+        with self._session() as conn:
+            row = conn.execute(
+                "SELECT * FROM keys WHERE key_id = ?", (key_id,)
+            ).fetchone()
         if row:
             return KeyPair(
                 key_id=row["key_id"],
@@ -82,7 +102,7 @@ class Repository:
 
     def log_verification(self, sig_id: str, status: str, reason_code: ReasonCode, verified_at: str, details: str = "") -> None:
         """Ghi nhật ký xác minh chỉ ghi thêm (Append-only)"""
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.execute(
                 """
                 INSERT INTO verify_logs (sig_id, status, reason_code, verified_at, details)
@@ -95,15 +115,23 @@ class Repository:
     # Long bổ sung — chữ ký và thu hồi khóa (FR-17, FR-18, FR-19)
     # ==================================================================
 
+    def list_keys(self) -> List[KeyPair]:
+        """Mọi khóa trong kho, mới nhất trước. Dùng cho lệnh `dt19 keys`."""
+        with self._session() as conn:
+            rows = conn.execute(
+                "SELECT key_id FROM keys ORDER BY created_at DESC"
+            ).fetchall()
+        return [self.get_key(r["key_id"]) for r in rows]
+
     def set_key_status(self, key_id: str, status: str) -> None:
         """Đổi trạng thái khóa, dùng khi thu hồi."""
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.execute(
                 "UPDATE keys SET status = ? WHERE key_id = ?", (status, key_id)
             )
 
     def save_signature(self, sig: Signature) -> None:
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO signatures
@@ -133,24 +161,25 @@ class Repository:
         )
 
     def get_signature(self, signature_id: str) -> Optional[Signature]:
-        conn = self.get_connection()
-        row = conn.execute(
-            "SELECT * FROM signatures WHERE signature_id = ?", (signature_id,)
-        ).fetchone()
+        with self._session() as conn:
+            row = conn.execute(
+                "SELECT * FROM signatures WHERE signature_id = ?", (signature_id,)
+            ).fetchone()
         return self._row_to_signature(row) if row else None
 
     def find_signatures_by_key(self, key_id: str) -> List[Signature]:
         """Mọi chữ ký tạo bằng một khóa. Đầu vào của bước đánh giá thiệt hại."""
-        conn = self.get_connection()
-        rows = conn.execute(
-            "SELECT * FROM signatures WHERE key_id = ? ORDER BY signed_at", (key_id,)
-        ).fetchall()
+        with self._session() as conn:
+            rows = conn.execute(
+                "SELECT * FROM signatures WHERE key_id = ? ORDER BY signed_at",
+                (key_id,),
+            ).fetchall()
         return [self._row_to_signature(r) for r in rows]
 
     def save_revocation(
         self, key_id: str, reason: str, revoked_at: datetime, affected: int
     ) -> None:
-        with self.get_connection() as conn:
+        with self._session(commit=True) as conn:
             conn.execute(
                 """
                 INSERT OR REPLACE INTO revocations
@@ -162,8 +191,8 @@ class Repository:
 
     def get_revocation(self, key_id: str) -> Optional[datetime]:
         """Mốc cắt hiệu lực của khóa, hoặc None nếu khóa chưa bị thu hồi."""
-        conn = self.get_connection()
-        row = conn.execute(
-            "SELECT revoked_at FROM revocations WHERE key_id = ?", (key_id,)
-        ).fetchone()
+        with self._session() as conn:
+            row = conn.execute(
+                "SELECT revoked_at FROM revocations WHERE key_id = ?", (key_id,)
+            ).fetchone()
         return datetime.fromisoformat(row["revoked_at"]) if row else None
