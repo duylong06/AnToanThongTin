@@ -74,7 +74,7 @@ pytest -q
 
 | | |
 | --- | --- |
-| Ca kiểm thử | **54/54 đạt** |
+| Ca kiểm thử | **55/55 đạt** |
 | Độ phủ mã | **86%** (ngưỡng nhóm đặt: 70%) |
 | Xác minh tệp 1 MB | **1,87 ms** (ngưỡng: dưới 50 ms) |
 | Loại sai lệch phân biệt được | **6** mã lý do riêng |
@@ -171,22 +171,38 @@ Windows không được hệ điều hành bảo vệ ở mức tương đương
 
 ```bash
 rm -f data/sigtool.db results/verify_log.jsonl
+rm -f keys/trust_list_*.json
 rm -rf keys/*/ signatures/*
 python -m dt19 init
 ```
+
+Windows (Command Prompt):
+
+```
+del /q data\sigtool.db results\verify_log.jsonl
+del /q keys\trust_list_*.json
+rmdir /s /q keys\ed25519 signatures
+python -m dt19 init
+```
+
+**Đừng quên dòng xóa `keys/trust_list_*.json`.** Kho mã có sẵn hai tệp trust
+list làm minh chứng cho báo cáo, trong đó là khóa cũ. Lệnh `keygen` chỉ công
+bố trust list khi chưa có tệp nào, nên để nguyên thì khóa mới sinh sẽ không
+nằm trong danh sách tin cậy và `verify` trả `KEY_NOT_TRUSTED`. Chạy xong thì
+`git checkout -- keys/ artifacts/ results/` để lấy lại bộ minh chứng gốc.
 
 ## Công khai sử dụng AI
 
 | Công cụ | Nội dung hỗ trợ | Phần nhóm tự thực hiện và chịu trách nhiệm |
 | --- | --- | --- |
-| Claude (Anthropic) | Soạn bản nháp mã nguồn cho `signers.py`, `services.py`, `trust.py`, `repository.py`, `cli.py`; soạn bản nháp bộ kiểm thử; soạn bản nháp tài liệu `docs/01`–`docs/09`; soạn kịch bản CI; giải thích lý thuyết chương 4 và chương 6 khi nhóm hỏi | Chọn phạm vi và ba câu hỏi nghiên cứu; chốt bảng mã lý do và thứ tự kiểm tra; đọc hiểu và rà từng tệp trước khi commit; chạy lại toàn bộ 54 ca kiểm thử và script sinh minh chứng; đối chiếu số liệu với bài giảng chương 4; tự trả lời phần lý thuyết khi bảo vệ |
+| Claude (Anthropic) | Soạn bản nháp mã nguồn cho `signers.py`, `services.py`, `trust.py`, `repository.py`, `cli.py`; soạn bản nháp bộ kiểm thử; soạn bản nháp tài liệu `docs/01`–`docs/09`; soạn kịch bản CI; giải thích lý thuyết chương 4 và chương 6 khi nhóm hỏi | Chọn phạm vi và ba câu hỏi nghiên cứu; chốt bảng mã lý do và thứ tự kiểm tra; đọc hiểu và rà từng tệp trước khi commit; chạy lại toàn bộ 55 ca kiểm thử và script sinh minh chứng; đối chiếu số liệu với bài giảng chương 4; tự trả lời phần lý thuyết khi bảo vệ |
 | CrypTool 2 | Đối chiếu kết quả băm SHA-256 và minh họa RSA, ECDSA trong buổi học | Tự chạy lại và so với đầu ra của `sigtool` |
 
 **Nhóm đã tự kiểm chứng những gì:**
 
 | Việc | Người làm | Bằng chứng |
 | --- | --- | --- |
-| Chạy lại 54/54 ca kiểm thử, độ phủ 86% | | CI trên GitHub Actions, 3 phiên bản Python |
+| Chạy lại 55/55 ca kiểm thử, độ phủ 86% | | CI trên GitHub Actions, 3 phiên bản Python |
 | Chạy lại `scripts/sinh_minh_chung.py`, 6/6 kịch bản đúng mã lý do | | `results/bang_ma_ly_do.csv` |
 | Đo lại hiệu năng bằng lệnh `bench` | | `results/bench_raw.csv`, 100 lần lặp |
 | Đọc và giải thích được từng tệp mình commit | | Mục hỏi đáp khi bảo vệ |
