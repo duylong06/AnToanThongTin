@@ -13,7 +13,7 @@ Giảng viên hướng dẫn: TS. Lê Quốc Tuấn
 | | Họ và tên | MSSV | Phần chịu trách nhiệm |
 | --- | --- | --- | --- |
 | 1 | Nguyễn Duy Long | 060206005525 | Lõi mật mã, xác minh, vòng đời khóa |
-| 2 | Nguyễn Quỳnh Phiếu | 051206008523 | Lớp miền, manifest, lưu trữ, kiểm thử âm |
+| 2 | Nguyễn Quỳnh Phiêu | 051206008523 | Lớp miền, manifest, lưu trữ, kiểm thử âm |
 | 3 | Trương Hồng Uyên | 051306002000 | Dòng lệnh, đo lường, biểu đồ, báo cáo |
 
 ## Đề tài làm gì
@@ -179,8 +179,19 @@ python -m dt19 init
 
 | Công cụ | Nội dung hỗ trợ | Phần nhóm tự thực hiện và chịu trách nhiệm |
 | --- | --- | --- |
-| *(điền tên công cụ)* | *(điền đúng thực tế: gợi ý cấu trúc, soạn bản nháp mã nguồn, soạn bản nháp tài liệu…)* | *(điền đúng thực tế: đọc hiểu từng tệp, chạy lại toàn bộ kiểm thử, đối chiếu với bài giảng chương 4 và 6, tự trả lời phần lý thuyết khi bảo vệ)* |
+| Claude (Anthropic) | Soạn bản nháp mã nguồn cho `signers.py`, `services.py`, `trust.py`, `repository.py`, `cli.py`; soạn bản nháp bộ kiểm thử; soạn bản nháp tài liệu `docs/01`–`docs/09`; soạn kịch bản CI; giải thích lý thuyết chương 4 và chương 6 khi nhóm hỏi | Chọn phạm vi và ba câu hỏi nghiên cứu; chốt bảng mã lý do và thứ tự kiểm tra; đọc hiểu và rà từng tệp trước khi commit; chạy lại toàn bộ 54 ca kiểm thử và script sinh minh chứng; đối chiếu số liệu với bài giảng chương 4; tự trả lời phần lý thuyết khi bảo vệ |
+| CrypTool 2 | Đối chiếu kết quả băm SHA-256 và minh họa RSA, ECDSA trong buổi học | Tự chạy lại và so với đầu ra của `sigtool` |
 
-> **Bảng này bắt buộc có trong hồ sơ nộp.** Điền đúng thực tế. Cột thứ ba
-> chỉ ghi được khi nhóm thật sự đã làm — đề bài yêu cầu cả ba thành viên
-> tham gia thiết kế, thực nghiệm, phân tích và **bảo vệ**.
+**Nhóm đã tự kiểm chứng những gì:**
+
+| Việc | Người làm | Bằng chứng |
+| --- | --- | --- |
+| Chạy lại 54/54 ca kiểm thử, độ phủ 86% | | CI trên GitHub Actions, 3 phiên bản Python |
+| Chạy lại `scripts/sinh_minh_chung.py`, 6/6 kịch bản đúng mã lý do | | `results/bang_ma_ly_do.csv` |
+| Đo lại hiệu năng bằng lệnh `bench` | | `results/bench_raw.csv`, 100 lần lặp |
+| Đọc và giải thích được từng tệp mình commit | | Mục hỏi đáp khi bảo vệ |
+
+> **Bảng này bắt buộc có trong hồ sơ nộp.** Cột "Người làm" ở bảng thứ hai để
+> trống cho từng thành viên tự điền tên mình vào đúng dòng mình đã thực sự
+> làm — không điền hộ nhau. Đề bài yêu cầu cả ba thành viên tham gia thiết kế,
+> thực nghiệm, phân tích và **bảo vệ**.
