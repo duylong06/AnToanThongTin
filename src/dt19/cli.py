@@ -389,7 +389,36 @@ HANDLERS = {
 }
 
 
+def _ep_dau_ra_sang_utf8() -> None:
+    """Ép stdout và stderr dùng UTF-8.
+
+    Mọi thông báo của công cụ đều có dấu tiếng Việt. Trên Windows, khi đầu ra
+    không gắn thẳng vào cửa sổ console — bị chuyển hướng vào tệp, nối ống sang
+    lệnh khác, hoặc chạy trong CI — Python lấy bảng mã mặc định của hệ thống là
+    cp1252, mà cp1252 không mã hóa được chữ "Đ". Câu lệnh print ném
+    UnicodeEncodeError và tiến trình chết với mã thoát 1.
+
+    Hậu quả nặng hơn vẻ ngoài: phần việc thật đã xong xuôi — cơ sở dữ liệu đã
+    tạo, khóa đã sinh — rồi mới chết ở câu in. Và mã thoát 1 theo quy ước ở
+    docs/04 nghĩa là "xác minh trượt", nên script tự động hóa sẽ hiểu nhầm một
+    lỗi hiển thị thành một phát hiện giả mạo.
+
+    Đặt biến môi trường PYTHONIOENCODING=utf-8 cũng chữa được, nhưng bắt người
+    dùng nhớ một biến môi trường để công cụ khỏi chết là thiết kế tồi.
+
+    errors="replace" để nếu luồng nào thật sự không nhận UTF-8 thì ký tự lạ
+    hiện thành dấu hỏi, chứ tiến trình không chết.
+    """
+    for luong in (sys.stdout, sys.stderr):
+        try:
+            luong.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError, OSError):
+            # luồng đã bị thay bằng đối tượng khác (pytest capsys) hoặc đã đóng
+            pass
+
+
 def main(argv: list[str] | None = None) -> int:
+    _ep_dau_ra_sang_utf8()
     parser = create_parser()
     args = parser.parse_args(argv)
 

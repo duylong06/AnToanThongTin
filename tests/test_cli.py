@@ -202,3 +202,48 @@ def test_verify_khong_co_chu_ky_thi_thoat_ma_2(cli_workdir, capsys):
     main(["init"])
     assert main(["verify", "artifacts/app.bin", "--sig", "khong-ton-tai"]) == 2
     assert "Không tìm thấy chữ ký" in capsys.readouterr().out
+
+
+def test_dau_ra_tieng_viet_khong_chet_khi_bang_ma_he_thong_la_cp1252(tmp_path):
+    """Thông báo có dấu tiếng Việt phải in được cả khi hệ thống dùng cp1252.
+
+    Trên Windows, khi đầu ra bị chuyển hướng hoặc nối ống, Python lấy bảng mã
+    mặc định cp1252 thay vì UTF-8. cp1252 không mã hóa được chữ "Đ", nên câu
+    `print(f"Đã khởi tạo...")` ném UnicodeEncodeError và tiến trình chết với
+    mã thoát 1 — dù cơ sở dữ liệu đã tạo xong.
+
+    Mã thoát 1 theo quy ước ở đầu tệp này nghĩa là "xác minh thất bại", nên
+    một lỗi hiển thị sẽ bị script tự động hóa hiểu nhầm thành phát hiện giả
+    mạo. Vì vậy ca này kiểm cả mã thoát chứ không chỉ kiểm không có ngoại lệ.
+
+    Phải chạy bằng tiến trình con: PYTHONIOENCODING chỉ có tác dụng lúc Python
+    khởi động, đặt trong tiến trình đang chạy thì không đổi được stdout.
+    """
+    import os
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    goc = Path(__file__).resolve().parents[1]
+
+    # init đọc data/schema.sql theo đường dẫn tương đối với thư mục làm việc,
+    # nên phải chép lược đồ sang thư mục tạm trước khi chạy
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "schema.sql").write_bytes(
+        (goc / "data" / "schema.sql").read_bytes()
+    )
+
+    moi_truong = dict(os.environ)
+    moi_truong["PYTHONIOENCODING"] = "cp1252"
+    moi_truong["PYTHONPATH"] = str(goc / "src")
+
+    ket_qua = subprocess.run(
+        [sys.executable, "-m", "dt19", "init"],
+        cwd=tmp_path, env=moi_truong, capture_output=True, text=True,
+    )
+
+    assert ket_qua.returncode == 0, (
+        "lệnh init chết khi bảng mã hệ thống là cp1252:\n" + ket_qua.stderr
+    )
+    assert "UnicodeEncodeError" not in ket_qua.stderr
+    assert (tmp_path / "data" / "sigtool.db").exists()
